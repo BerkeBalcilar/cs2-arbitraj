@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Başlığı V3 olarak güncelledik ki yeni dosyanın açılıp açılmadığı anlaşılabilsin -->
+    <title>CS2 Arbitraj Hesaplayıcı (V3)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --primary: #38bdf8;
+            --primary-hover: #0284c7;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            gap: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 1.5rem;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(129, 140, 248, 0.1) 100%);
+            border-color: rgba(56, 189, 248, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            transition: color 0.3s ease;
+        }
+
+        .positive { color: var(--success); text-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .negative { color: var(--danger); text-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .neutral { color: var(--text-main); }
+
+        .btn {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: #fff;
+            border: none;
+            padding: 0.85rem 1.5rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: rgba(56, 189, 248, 0.1);
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        th {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        td {
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-steam { background: #171a21; color: #fff; border: 1px solid #2a475e; }
+        .badge-csfloat { background: rgba(255, 94, 0, 0.2); color: #ff8c00; border: 1px solid rgba(255, 94, 0, 0.4); }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>CS2 Arbitraj Merkezi</h1>
+        <p>Steam ve CSFloat verilerini gir, kârı hesapla ve işlemlerini kaydet.</p>
+    </header>
+
+    <div class="grid-2">
+        <div class="glass-card">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.3rem; color: #fff;">Hızlı Hesaplayıcı</h2>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="itemName">Eşya Adı (Opsiyonel)</label>
+                <input type="text" id="itemName" placeholder="Örn: AK-47 | Redline (Field-Tested)">
+            </div>
+            
+            <div class="grid-2" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="buyPlatform">Nereden Alıyorsun?</label>
+                    <select id="buyPlatform">
+                        <option value="CSFloat">CSFloat</option>
+                        <option value="Steam">Steam</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="buyPrice">Alış Fiyatı ($)</label>
+                    <input type="text" inputmode="decimal" id="buyPrice" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label for="sellPlatform">Nereye Satıyorsun?</label>
+                    <select id="sellPlatform">
+                        <option value="Steam">Steam (~%13.04 Komisyon)</option>
+                        <option value="CSFloat">CSFloat (%2 Komisyon)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sellPrice">Satış Fiyatı ($)</label>
+                    <input type="text" inputmode="decimal" id="sellPrice" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="frequency">Satılma Sıklığı (Opsiyonel)</label>
+                <input type="text" id="frequency" placeholder="Örn: Günde 50+ Adet">
+            </div>
+
+            <div class="action-btns">
+                <button class="btn" id="saveBtn" style="flex: 1;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Hesapla & Listeye Ekle
+                </button>
+                <button class="btn btn-outline" id="clearBtn">Temizle</button>
+            </div>
+        </div>
+
+        <div class="glass-card results">
+            <div class="metric">
+                <label>Net Ele Geçen</label>
+                <div class="metric-value neutral" id="netRevenue" style="font-size: 2.2rem;">$0.00</div>
+            </div>
+            <div style="width: 50px; height: 2px; background: rgba(255,255,255,0.1); margin: 0.5rem 0;"></div>
+            <div class="metric">
+                <label>Net Kâr</label>
+                <div class="metric-value" id="netProfit">$0.00</div>
+            </div>
+            <div class="metric" style="margin-top: 0.5rem;">
+                <label>ROI (Kâr Marjı)</label>
+                <div class="metric-value" id="roi" style="font-size: 1.8rem;">0.00%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card" style="overflow-x: auto; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.3rem;">Kaydedilen İşlemler</h2>
+            <button class="btn btn-outline" id="exportBtn" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Excel Olarak İndir (.csv)
+            </button>
+        </div>
+        
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Eşya Adı</th>
+                    <th>Alış</th>
+                    <th>Satış</th>
+                    <th>Ele Geçen</th>
+                    <th>Kâr</th>
+                    <th>ROI</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data injected via JS -->
+            </tbody>
+        </table>
+        <div id="emptyState" class="empty-state">
+            Henüz hiç veri girmediniz. Yukarıdan hesaplama yapıp "Hesapla & Listeye Ekle" butonuna basın.
+        </div>
+    </div>
+</div>
+
+<script>
+    // Güvenlik için tüm kodları düz şekilde yazıyoruz
+    const elements = {
+        buyPlatform: document.getElementById('buyPlatform'),
+        buyPrice: document.getElementById('buyPrice'),
+        sellPlatform: document.getElementById('sellPlatform'),
+        sellPrice: document.getElementById('sellPrice'),
+        itemName: document.getElementById('itemName'),
+        frequency: document.getElementById('frequency'),
+        netRevenue: document.getElementById('netRevenue'),
+        netProfit: document.getElementById('netProfit'),
+        roi: document.getElementById('roi'),
+        saveBtn: document.getElementById('saveBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        tableBody: document.getElementById('tableBody'),
+        emptyState: document.getElementById('emptyState'),
+        exportBtn: document.getElementById('exportBtn'),
+        dataTable: document.getElementById('dataTable')
+    };
+
+    let savedItems = [];
+    
+    // Verileri okuma (Hata olursa boş liste başlar)
+    try {
+        if (window.localStorage) {
+            const data = window.localStorage.getItem('cs2ArbitrageData');
+            if (data) {
+                savedItems = JSON.parse(data);
+            }
+        }
+    } catch (e) {
+        console.warn('LocalStorage okunamadı.');
+    }
+
+    // Verileri kaydetme fonksiyonu
+    function saveToStorage() {
+        try {
+            if (window.localStorage) {
+                window.localStorage.setItem('cs2ArbitrageData', JSON.stringify(savedItems));
+            }
+        } catch (e) {
+            // İzin verilmiyorsa yoksay
+        }
+    }
+
+    function parseNumber(val) {
+        if (!val) return 0;
+        let stringVal = val.toString().replace(',', '.');
+        return parseFloat(stringVal) || 0;
+    }
+
+    function formatMoney(amount) {
+        return '$' + amount.toFixed(2);
+    }
+
+    function calculate() {
+        const bPrice = parseNumber(elements.buyPrice.value);
+        const sPrice = parseNumber(elements.sellPrice.value);
+        const sPlatform = elements.sellPlatform.value;
+
+        let feeMultiplier = 1;
+        if (sPlatform === 'Steam') {
+            feeMultiplier = 1 / 1.15; 
+        } else if (sPlatform === 'CSFloat') {
+            feeMultiplier = 0.98; 
+        }
+
+        const netRev = sPrice * feeMultiplier;
+        const profit = netRev - bPrice;
+        let roiVal = 0;
+        if (bPrice > 0) {
+            roiVal = (profit / bPrice) * 100;
+        }
+
+        updateUI(netRev, profit, roiVal, bPrice, sPrice);
+        return { netRev, profit, roiVal, bPrice, sPrice };
+    }
+
+    function updateUI(netRev, profit, roiVal, bPrice, sPrice) {
+        elements.netRevenue.innerText = formatMoney(netRev);
+        elements.netProfit.innerText = formatMoney(profit);
+        
+        let profitClass = 'neutral';
+        if (bPrice > 0 && sPrice > 0) {
+            profitClass = profit > 0 ? 'positive' : (profit < 0 ? 'negative' : 'neutral');
+        } else if (sPrice > 0) {
+            profitClass = 'positive';
+        }
+        
+        elements.netProfit.className = 'metric-value ' + profitClass;
+        elements.roi.innerText = roiVal.toFixed(2) + '%';
+        elements.roi.className = 'metric-value ' + profitClass;
+    }
+
+    function renderTable() {
+        elements.tableBody.innerHTML = '';
+        if (savedItems.length === 0) {
+            elements.emptyState.style.display = 'block';
+            elements.dataTable.style.display = 'none';
+        } else {
+            elements.emptyState.style.display = 'none';
+            elements.dataTable.style.display = 'table';
+            
+            savedItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const profitClass = item.profit > 0 ? 'positive' : (item.profit < 0 ? 'negative' : 'neutral');
+                
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 600; color: #fff;">${item.name || 'İsimsiz Eşya'}</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">${item.freq || '-'}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-${item.bPlat.toLowerCase()}">${item.bPlat}</span>
+                        <div style="margin-top: 6px; font-weight: 600;">${formatMoney(item.bPrice)}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-${item.sPlat.toLowerCase()}">${item.sPlat}</span>
+                        <div style="margin-top: 6px; font-weight: 600;">${formatMoney(item.sPrice)}</div>
+                    </td>
+                    <td style="font-weight: 600;">${formatMoney(item.netRev)}</td>
+                    <td class="${profitClass}" style="font-weight: 800; font-size: 1.1rem;">${formatMoney(item.profit)}</td>
+                    <td class="${profitClass}" style="font-weight: 800;">${item.roi.toFixed(2)}%</td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: #ef4444; color: #ef4444; box-shadow: none;" onclick="window.deleteItem(${index})">Sil</button>
+                    </td>
+                `;
+                elements.tableBody.appendChild(tr);
+            });
+        }
+        saveToStorage();
+    }
+
+    window.deleteItem = function(index) {
+        savedItems.splice(index, 1);
+        renderTable();
+    }
+
+    // Event listenerlar
+    elements.buyPrice.addEventListener('input', calculate);
+    elements.sellPrice.addEventListener('input', calculate);
+    elements.buyPlatform.addEventListener('input', calculate);
+    elements.sellPlatform.addEventListener('input', calculate);
+
+    elements.saveBtn.addEventListener('click', () => {
+        const result = calculate();
+        
+        savedItems.push({
+            name: elements.itemName.value,
+            bPlat: elements.buyPlatform.value,
+            bPrice: result.bPrice,
+            sPlat: elements.sellPlatform.value,
+            sPrice: result.sPrice,
+            freq: elements.frequency.value,
+            netRev: result.netRev, 
+            profit: result.profit, 
+            roi: result.roiVal
+        });
+        
+        renderTable();
+        
+        elements.itemName.value = '';
+        elements.frequency.value = '';
+        elements.buyPrice.value = '';
+        elements.sellPrice.value = '';
+        
+        calculate();
+    });
+
+    elements.clearBtn.addEventListener('click', () => {
+        elements.itemName.value = '';
+        elements.buyPrice.value = '';
+        elements.sellPrice.value = '';
+        elements.frequency.value = '';
+        calculate();
+    });
+
+    elements.exportBtn.addEventListener('click', () => {
+        if(savedItems.length === 0) {
+            alert('Dışa aktarılacak veri yok.');
+            return;
+        }
+        
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += "Eşya Adı;Alış Platformu;Alış Fiyatı ($);Satış Platformu;Satış Fiyatı ($);Net Ele Geçen ($);Kâr ($);ROI (%);Satılma Sıklığı\n";
+        
+        savedItems.forEach(row => {
+            const rowData = [
+                row.name || 'İsimsiz Eşya',
+                row.bPlat,
+                row.bPrice.toString().replace('.', ','),
+                row.sPlat,
+                row.sPrice.toString().replace('.', ','),
+                row.netRev.toFixed(2).replace('.', ','),
+                row.profit.toFixed(2).replace('.', ','),
+                row.roi.toFixed(2).replace('.', ','),
+                row.freq || '-'
+            ];
+            csvContent += rowData.join(";") + "\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "CS2_Arbitraj_Raporu.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    elements.buyPlatform.addEventListener('change', () => {
+        if(elements.buyPlatform.value === 'Steam') elements.sellPlatform.value = 'CSFloat';
+        if(elements.buyPlatform.value === 'CSFloat') elements.sellPlatform.value = 'Steam';
+        calculate();
+    });
+
+    elements.sellPlatform.addEventListener('change', () => {
+        if(elements.sellPlatform.value === 'Steam') elements.buyPlatform.value = 'CSFloat';
+        if(elements.sellPlatform.value === 'CSFloat') elements.buyPlatform.value = 'Steam';
+        calculate();
+    });
+
+    // Başlangıç
+    renderTable();
+    calculate();
+
+</script>
+</body>
+</html>
